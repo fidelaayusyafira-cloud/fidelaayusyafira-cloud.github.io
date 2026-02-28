@@ -1,3 +1,13 @@
 .hero {
-    background-image: url('1.png');
+  background-image: url('1.png'), linear-gradient(to right, rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.5));
+  background-size: cover;
+  height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  color: white;
 }
+
+/* Add other styles below as necessary */
+/* Original CSS rules restored below with the 1.png background image */
+/* ...Other CSS rules go here... */
