@@ -71,8 +71,8 @@ body {
 
 /* Hero Section */
 .hero {
-    background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
-    color: var(--white);
+    background:  linear-gradient(135deg, rgba(42, 27, 17, 0.7), rgba(81, 59, 41, 0.7)), 
+                url('images/background-bg.jpg') center/cover no-repeat;
     padding: 150px 20px;
     text-align: center;
     position: relative;
