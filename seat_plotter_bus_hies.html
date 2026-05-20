@@ -1,0 +1,307 @@
+
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:var(--font-sans)}
+h2.sr-only{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0,0,0,0)}
+.wrap{padding:1rem 0}
+.tabs{display:flex;gap:8px;margin-bottom:1.5rem}
+.tab{padding:6px 18px;border:0.5px solid var(--color-border-secondary);border-radius:var(--border-radius-md);background:transparent;cursor:pointer;font-size:14px;color:var(--color-text-secondary);transition:all .15s}
+.tab.active{background:var(--color-background-secondary);border-color:var(--color-border-primary);color:var(--color-text-primary);font-weight:500}
+.panel{display:none}.panel.active{display:block}
+.bus-outer{background:var(--color-background-secondary);border:1.5px solid var(--color-border-secondary);border-radius:20px;padding:16px 12px;max-width:340px;margin:0 auto}
+.bus-label{text-align:center;font-size:12px;color:var(--color-text-secondary);margin-bottom:12px;letter-spacing:.05em}
+.driver-row{display:flex;justify-content:flex-end;gap:8px;margin-bottom:16px;padding-bottom:12px;border-bottom:0.5px solid var(--color-border-tertiary)}
+.seat{width:46px;height:46px;border-radius:8px;border:1.5px solid var(--color-border-secondary);background:var(--color-background-primary);display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;font-size:10px;color:var(--color-text-secondary);transition:all .15s;position:relative}
+.seat:hover:not(.taken):not(.driver){border-color:#378ADD;color:#378ADD}
+.seat.taken{background:#C0DD97;border-color:#639922;color:#3B6D11;cursor:pointer}
+.seat.selected{background:#B5D4F4;border-color:#378ADD;color:#0C447C}
+.seat.driver{background:var(--color-background-tertiary);border-color:var(--color-border-tertiary);cursor:default;color:var(--color-text-tertiary)}
+.seat-num{font-weight:600;font-size:11px}
+.seat-name{font-size:9px;max-width:40px;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
+.rows-area{display:flex;flex-direction:column;gap:6px}
+.row{display:flex;align-items:center;gap:8px}
+.aisle{flex:1;min-width:12px}
+.row-num{font-size:11px;color:var(--color-text-tertiary);min-width:16px;text-align:center}
+.back-row{margin-top:12px;padding-top:12px;border-top:0.5px solid var(--color-border-tertiary);display:flex;gap:6px;justify-content:center}
+.legend{display:flex;gap:12px;justify-content:center;margin-top:12px;flex-wrap:wrap}
+.leg-item{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--color-text-secondary)}
+.leg-dot{width:14px;height:14px;border-radius:4px;border:1.5px solid}
+.modal{display:none;position:absolute;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.35);z-index:100;align-items:center;justify-content:center}
+.modal.show{display:flex}
+.modal-box{background:var(--color-background-primary);border-radius:var(--border-radius-lg);border:0.5px solid var(--color-border-secondary);padding:1.25rem;width:260px}
+.modal-box h3{font-size:15px;font-weight:500;margin-bottom:12px;color:var(--color-text-primary)}
+.modal-box input{width:100%;margin-bottom:8px;padding:7px 10px;font-size:14px;border-radius:var(--border-radius-md);border:0.5px solid var(--color-border-secondary);background:var(--color-background-primary);color:var(--color-text-primary)}
+.modal-actions{display:flex;gap:8px;margin-top:4px}
+.modal-actions button{flex:1;padding:7px;border-radius:var(--border-radius-md);border:0.5px solid var(--color-border-secondary);cursor:pointer;font-size:13px;background:transparent;color:var(--color-text-primary)}
+.modal-actions .btn-confirm{background:var(--color-background-info);border-color:var(--color-border-info);color:var(--color-text-info);font-weight:500}
+.modal-actions .btn-remove{background:var(--color-background-danger);border-color:var(--color-border-danger);color:var(--color-text-danger)}
+.stats{display:flex;gap:8px;margin-bottom:1rem}
+.stat{flex:1;background:var(--color-background-secondary);border-radius:var(--border-radius-md);padding:.6rem 1rem;text-align:center}
+.stat-val{font-size:20px;font-weight:500;color:var(--color-text-primary)}
+.stat-lbl{font-size:11px;color:var(--color-text-secondary)}
+.list-area{margin-top:1rem}
+.list-area h3{font-size:13px;font-weight:500;color:var(--color-text-secondary);margin-bottom:8px}
+.pax-list{display:flex;flex-direction:column;gap:6px;max-height:220px;overflow-y:auto}
+.pax-item{display:flex;align-items:center;gap:8px;padding:7px 10px;background:var(--color-background-secondary);border-radius:var(--border-radius-md);font-size:13px}
+.pax-badge{background:#B5D4F4;color:#0C447C;border-radius:4px;padding:2px 6px;font-size:11px;font-weight:600;min-width:28px;text-align:center}
+.pax-badge.hies{background:#C0DD97;color:#3B6D11}
+.pax-name{flex:1;color:var(--color-text-primary)}
+.pax-del{background:none;border:none;cursor:pointer;color:var(--color-text-tertiary);font-size:15px;padding:0 2px}
+.pax-del:hover{color:var(--color-text-danger)}
+.export-btn{margin-top:1rem;width:100%;padding:8px;border-radius:var(--border-radius-md);border:0.5px solid var(--color-border-secondary);background:transparent;cursor:pointer;font-size:13px;color:var(--color-text-primary)}
+.export-btn:hover{background:var(--color-background-secondary)}
+.modal-wrap{position:relative;min-height:400px}
+</style>
+<h2 class="sr-only">Aplikasi pemilihan kursi bus dan HiAce untuk agenda studi banding</h2>
+<div class="wrap">
+  <div class="tabs">
+    <button class="tab active" onclick="switchTab('bus')"><i class="ti ti-bus" aria-hidden="true"></i> Bus (40 kursi)</button>
+    <button class="tab" onclick="switchTab('hies')"><i class="ti ti-car" aria-hidden="true"></i> HiAce (14 kursi)</button>
+    <button class="tab" onclick="switchTab('list')"><i class="ti ti-list" aria-hidden="true"></i> Daftar Peserta</button>
+  </div>
+
+  <div id="panel-bus" class="panel active">
+    <div class="stats">
+      <div class="stat"><div class="stat-val" id="bus-taken">0</div><div class="stat-lbl">Terisi</div></div>
+      <div class="stat"><div class="stat-val" id="bus-avail">40</div><div class="stat-lbl">Tersedia</div></div>
+      <div class="stat"><div class="stat-val">40</div><div class="stat-lbl">Total</div></div>
+    </div>
+    <div class="modal-wrap">
+      <div class="bus-outer" id="bus-layout"></div>
+      <div class="modal" id="modal-bus">
+        <div class="modal-box">
+          <h3 id="modal-bus-title">Kursi B1</h3>
+          <input type="text" id="modal-bus-input" placeholder="Nama peserta..." maxlength="30"/>
+          <div class="modal-actions">
+            <button onclick="closeModal('bus')">Batal</button>
+            <button class="btn-remove" id="btn-remove-bus" onclick="removeSeat('bus')" style="display:none">Hapus</button>
+            <button class="btn-confirm" onclick="saveSeat('bus')">Simpan</button>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="legend">
+      <div class="leg-item"><div class="leg-dot" style="background:var(--color-background-primary);border-color:var(--color-border-secondary)"></div>Kosong</div>
+      <div class="leg-item"><div class="leg-dot" style="background:#B5D4F4;border-color:#378ADD"></div>Dipilih</div>
+      <div class="leg-item"><div class="leg-dot" style="background:#C0DD97;border-color:#639922"></div>Terisi</div>
+    </div>
+  </div>
+
+  <div id="panel-hies" class="panel">
+    <div class="stats">
+      <div class="stat"><div class="stat-val" id="hies-taken">0</div><div class="stat-lbl">Terisi</div></div>
+      <div class="stat"><div class="stat-val" id="hies-avail">14</div><div class="stat-lbl">Tersedia</div></div>
+      <div class="stat"><div class="stat-val">14</div><div class="stat-lbl">Total</div></div>
+    </div>
+    <div class="modal-wrap">
+      <div class="bus-outer" id="hies-layout"></div>
+      <div class="modal" id="modal-hies">
+        <div class="modal-box">
+          <h3 id="modal-hies-title">Kursi H1</h3>
+          <input type="text" id="modal-hies-input" placeholder="Nama peserta..." maxlength="30"/>
+          <div class="modal-actions">
+            <button onclick="closeModal('hies')">Batal</button>
+            <button class="btn-remove" id="btn-remove-hies" onclick="removeSeat('hies')" style="display:none">Hapus</button>
+            <button class="btn-confirm" onclick="saveSeat('hies')">Simpan</button>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="legend">
+      <div class="leg-item"><div class="leg-dot" style="background:var(--color-background-primary);border-color:var(--color-border-secondary)"></div>Kosong</div>
+      <div class="leg-item"><div class="leg-dot" style="background:#B5D4F4;border-color:#378ADD"></div>Dipilih</div>
+      <div class="leg-item"><div class="leg-dot" style="background:#C0DD97;border-color:#639922"></div>Terisi</div>
+    </div>
+  </div>
+
+  <div id="panel-list" class="panel">
+    <div class="stats">
+      <div class="stat"><div class="stat-val" id="total-pax">0</div><div class="stat-lbl">Total Peserta</div></div>
+      <div class="stat"><div class="stat-val" id="total-bus-pax">0</div><div class="stat-lbl">Bus</div></div>
+      <div class="stat"><div class="stat-val" id="total-hies-pax">0</div><div class="stat-lbl">HiAce</div></div>
+    </div>
+    <div class="list-area">
+      <h3>Bus</h3>
+      <div class="pax-list" id="list-bus"></div>
+      <h3 style="margin-top:12px">HiAce</h3>
+      <div class="pax-list" id="list-hies"></div>
+    </div>
+    <button class="export-btn" onclick="exportData()"><i class="ti ti-download" aria-hidden="true"></i> Export daftar (.txt)</button>
+  </div>
+</div>
+
+<script>
+const busData = {};
+const hiesData = {};
+let currentSeat = null;
+let currentVeh = null;
+
+function buildBus() {
+  const el = document.getElementById('bus-layout');
+  el.innerHTML = '<div class="bus-label">↑ DEPAN (KEMUDI)</div>';
+  const drow = document.createElement('div');
+  drow.className = 'driver-row';
+  drow.innerHTML = '<div class="seat driver"><span class="seat-num">🚌</span></div><div class="seat driver"><span class="seat-num">SUPIR</span></div>';
+  el.appendChild(drow);
+  const area = document.createElement('div');
+  area.className = 'rows-area';
+  for(let r=1;r<=10;r++){
+    const row = document.createElement('div');
+    row.className = 'row';
+    const lNum = (r-1)*2+1;
+    const rNum = (r-1)*2+2;
+    const lId = 'B'+lNum;
+    const rId = 'B'+rNum;
+    row.innerHTML = `<span class="row-num">${r}</span>${makeSeat(lId,'bus')}${makeSeat(rId,'bus')}<div class="aisle"></div>${makeSeat('B'+(20+lNum),'bus')}${makeSeat('B'+(20+rNum),'bus')}`;
+    area.appendChild(row);
+  }
+  el.appendChild(area);
+  const back = document.createElement('div');
+  back.className = 'back-row';
+  for(let i=1;i<=4;i++){
+    back.innerHTML += makeSeat('BB'+i,'bus');
+  }
+  el.appendChild(back);
+  attachEvents('bus');
+}
+
+function buildHies() {
+  const el = document.getElementById('hies-layout');
+  el.innerHTML = '<div class="bus-label">↑ DEPAN (KEMUDI)</div>';
+  const drow = document.createElement('div');
+  drow.className = 'driver-row';
+  drow.innerHTML = '<div class="seat driver"><span class="seat-num">SUPIR</span></div><div class="seat" data-id="H1" data-veh="hies"><span class="seat-num">H1</span></div>';
+  el.appendChild(drow);
+  const area = document.createElement('div');
+  area.className = 'rows-area';
+  const hLayout = [[2,3],[4,5],[6,7],[8,9],[10,11],[12,13]];
+  hLayout.forEach((pair,i)=>{
+    const row = document.createElement('div');
+    row.className = 'row';
+    row.innerHTML = `<span class="row-num">${i+2}</span>${makeSeat('H'+pair[0],'hies')}<div class="aisle"></div>${makeSeat('H'+pair[1],'hies')}`;
+    area.appendChild(row);
+  });
+  const back = document.createElement('div');
+  back.className = 'back-row';
+  back.innerHTML = makeSeat('H14','hies');
+  el.appendChild(area);
+  el.appendChild(back);
+  attachEvents('hies');
+}
+
+function makeSeat(id, veh){
+  return `<div class="seat" data-id="${id}" data-veh="${veh}"><span class="seat-num">${id}</span><span class="seat-name"></span></div>`;
+}
+
+function attachEvents(veh){
+  document.querySelectorAll(`[data-veh="${veh}"]`).forEach(el=>{
+    el.addEventListener('click',()=>openModal(veh, el.dataset.id));
+  });
+}
+
+function openModal(veh, id){
+  currentSeat = id; currentVeh = veh;
+  const data = veh==='bus'?busData:hiesData;
+  const prefix = veh==='bus'?'modal-bus':'modal-hies';
+  document.getElementById(prefix+'-title').textContent = 'Kursi '+id;
+  document.getElementById(prefix+'-input').value = data[id]||'';
+  document.getElementById('btn-remove-'+veh).style.display = data[id]?'block':'none';
+  document.getElementById('modal-'+veh).classList.add('show');
+  setTimeout(()=>document.getElementById(prefix+'-input').focus(),100);
+}
+
+function closeModal(veh){ document.getElementById('modal-'+veh).classList.remove('show'); }
+
+function saveSeat(veh){
+  const prefix = veh==='bus'?'modal-bus':'modal-hies';
+  const name = document.getElementById(prefix+'-input').value.trim();
+  if(!name){alert('Masukkan nama peserta!');return;}
+  const data = veh==='bus'?busData:hiesData;
+  data[currentSeat] = name;
+  refreshLayout(veh);
+  closeModal(veh);
+  updateStats();
+}
+
+function removeSeat(veh){
+  const data = veh==='bus'?busData:hiesData;
+  delete data[currentSeat];
+  refreshLayout(veh);
+  closeModal(veh);
+  updateStats();
+}
+
+function refreshLayout(veh){
+  const data = veh==='bus'?busData:hiesData;
+  document.querySelectorAll(`[data-veh="${veh}"]`).forEach(el=>{
+    const id = el.dataset.id;
+    const nameEl = el.querySelector('.seat-name');
+    if(data[id]){
+      el.classList.add('taken');
+      el.classList.remove('selected');
+      if(nameEl) nameEl.textContent = data[id];
+    } else {
+      el.classList.remove('taken','selected');
+      if(nameEl) nameEl.textContent = '';
+    }
+  });
+}
+
+function updateStats(){
+  const bt = Object.keys(busData).length;
+  const ht = Object.keys(hiesData).length;
+  document.getElementById('bus-taken').textContent = bt;
+  document.getElementById('bus-avail').textContent = 40-bt;
+  document.getElementById('hies-taken').textContent = ht;
+  document.getElementById('hies-avail').textContent = 14-ht;
+  document.getElementById('total-pax').textContent = bt+ht;
+  document.getElementById('total-bus-pax').textContent = bt;
+  document.getElementById('total-hies-pax').textContent = ht;
+  renderList();
+}
+
+function renderList(){
+  const lb = document.getElementById('list-bus');
+  const lh = document.getElementById('list-hies');
+  lb.innerHTML = Object.entries(busData).sort((a,b)=>a[0].localeCompare(b[0],undefined,{numeric:true})).map(([id,name])=>`<div class="pax-item"><span class="pax-badge">${id}</span><span class="pax-name">${name}</span><button class="pax-del" onclick="quickRemove('bus','${id}')" title="Hapus">✕</button></div>`).join('')||'<div style="font-size:13px;color:var(--color-text-tertiary);padding:6px 0">Belum ada peserta</div>';
+  lh.innerHTML = Object.entries(hiesData).sort((a,b)=>a[0].localeCompare(b[0],undefined,{numeric:true})).map(([id,name])=>`<div class="pax-item"><span class="pax-badge hies">${id}</span><span class="pax-name">${name}</span><button class="pax-del" onclick="quickRemove('hies','${id}')" title="Hapus">✕</button></div>`).join('')||'<div style="font-size:13px;color:var(--color-text-tertiary);padding:6px 0">Belum ada peserta</div>';
+}
+
+function quickRemove(veh, id){
+  const data = veh==='bus'?busData:hiesData;
+  delete data[id];
+  refreshLayout(veh);
+  updateStats();
+}
+
+function switchTab(name){
+  document.querySelectorAll('.tab').forEach((t,i)=>{t.classList.remove('active'); if(['bus','hies','list'][i]===name) t.classList.add('active')});
+  document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
+  document.getElementById('panel-'+name).classList.add('active');
+  if(name==='list') updateStats();
+}
+
+function exportData(){
+  let txt = '=== DAFTAR PESERTA STUDI BANDING KE BANDUNG ===\n\n';
+  txt += '--- BUS ('+Object.keys(busData).length+'/40) ---\n';
+  Object.entries(busData).sort((a,b)=>a[0].localeCompare(b[0],undefined,{numeric:true})).forEach(([id,name])=>txt+=`${id.padEnd(6)} ${name}\n`);
+  txt += '\n--- HIACE ('+Object.keys(hiesData).length+'/14) ---\n';
+  Object.entries(hiesData).sort((a,b)=>a[0].localeCompare(b[0],undefined,{numeric:true})).forEach(([id,name])=>txt+=`${id.padEnd(6)} ${name}\n`);
+  const blob = new Blob([txt],{type:'text/plain'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'peserta-studi-banding.txt';
+  a.click();
+}
+
+document.querySelectorAll('.modal').forEach(m=>{
+  m.addEventListener('click',e=>{if(e.target===m){const veh=m.id.replace('modal-','');closeModal(veh);}});
+});
+document.querySelectorAll('.modal-box input').forEach(inp=>{
+  inp.addEventListener('keydown',e=>{if(e.key==='Enter'){const veh=inp.id.includes('bus')?'bus':'hies';saveSeat(veh);}});
+});
+
+buildBus();
+buildHies();
+updateStats();
+</script>
