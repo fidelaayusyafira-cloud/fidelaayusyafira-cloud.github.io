@@ -1,0 +1,338 @@
+
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+.sr-only{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0,0,0,0)}
+.wrap{padding:1rem 0}
+.sync-bar{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--color-text-secondary);margin-bottom:1rem;padding:6px 10px;background:var(--color-background-secondary);border-radius:var(--border-radius-md)}
+.sync-dot{width:8px;height:8px;border-radius:50%;background:#639922;flex-shrink:0}
+.sync-dot.loading{background:#EF9F27}
+.sync-dot.error{background:#E24B4A}
+.tabs{display:flex;gap:8px;margin-bottom:1.5rem;flex-wrap:wrap}
+.tab{padding:6px 16px;border:0.5px solid var(--color-border-secondary);border-radius:var(--border-radius-md);background:transparent;cursor:pointer;font-size:13px;color:var(--color-text-secondary)}
+.tab.active{background:var(--color-background-secondary);border-color:var(--color-border-primary);color:var(--color-text-primary);font-weight:500}
+.panel{display:none}.panel.active{display:block}
+.stats{display:flex;gap:8px;margin-bottom:1rem}
+.stat{flex:1;background:var(--color-background-secondary);border-radius:var(--border-radius-md);padding:.6rem .8rem;text-align:center}
+.stat-val{font-size:20px;font-weight:500;color:var(--color-text-primary)}
+.stat-lbl{font-size:11px;color:var(--color-text-secondary)}
+.bus-outer{background:var(--color-background-secondary);border:1.5px solid var(--color-border-secondary);border-radius:20px;padding:16px 12px;max-width:340px;margin:0 auto}
+.bus-label{text-align:center;font-size:12px;color:var(--color-text-secondary);margin-bottom:12px}
+.driver-row{display:flex;justify-content:flex-end;gap:8px;margin-bottom:16px;padding-bottom:12px;border-bottom:0.5px solid var(--color-border-tertiary)}
+.seat{width:46px;height:46px;border-radius:8px;border:1.5px solid var(--color-border-secondary);background:var(--color-background-primary);display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;font-size:10px;color:var(--color-text-secondary);transition:border-color .15s;position:relative}
+.seat:hover:not(.taken):not(.driver){border-color:#378ADD;color:#378ADD}
+.seat.taken{background:#EAF3DE;border-color:#639922;color:#3B6D11;cursor:not-allowed}
+.seat.driver{background:var(--color-background-tertiary);border-color:var(--color-border-tertiary);cursor:default;color:var(--color-text-tertiary)}
+.seat-num{font-weight:600;font-size:11px}
+.seat-name{font-size:9px;max-width:42px;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;text-align:center}
+.rows-area{display:flex;flex-direction:column;gap:6px}
+.row{display:flex;align-items:center;gap:8px}
+.aisle{flex:1;min-width:12px}
+.row-num{font-size:11px;color:var(--color-text-tertiary);min-width:16px;text-align:center}
+.back-row{margin-top:12px;padding-top:12px;border-top:0.5px solid var(--color-border-tertiary);display:flex;gap:6px;justify-content:center}
+.legend{display:flex;gap:12px;justify-content:center;margin-top:12px;flex-wrap:wrap}
+.leg-item{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--color-text-secondary)}
+.leg-dot{width:14px;height:14px;border-radius:4px;border:1.5px solid}
+.modal-wrap{position:relative}
+.modal{display:none;position:absolute;top:0;left:0;right:0;bottom:100%;z-index:100;align-items:flex-start;justify-content:center;padding-top:60px}
+.modal.show{display:flex}
+.modal-bg{position:absolute;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.3);border-radius:20px}
+.modal-box{background:var(--color-background-primary);border-radius:var(--border-radius-lg);border:0.5px solid var(--color-border-secondary);padding:1.25rem;width:240px;position:relative;z-index:1}
+.modal-box h3{font-size:14px;font-weight:500;margin-bottom:10px;color:var(--color-text-primary)}
+.modal-box input{width:100%;margin-bottom:8px;padding:7px 10px;font-size:13px;border-radius:var(--border-radius-md);border:0.5px solid var(--color-border-secondary);background:var(--color-background-primary);color:var(--color-text-primary)}
+.modal-actions{display:flex;gap:8px}
+.modal-actions button{flex:1;padding:7px;border-radius:var(--border-radius-md);border:0.5px solid var(--color-border-secondary);cursor:pointer;font-size:12px;background:transparent;color:var(--color-text-primary)}
+.btn-confirm{background:var(--color-background-success) !important;border-color:var(--color-border-success) !important;color:var(--color-text-success) !important;font-weight:500 !important}
+.pax-list{display:flex;flex-direction:column;gap:5px;margin-top:6px;margin-bottom:12px;max-height:200px;overflow-y:auto}
+.pax-item{display:flex;align-items:center;gap:8px;padding:6px 10px;background:var(--color-background-secondary);border-radius:var(--border-radius-md);font-size:13px}
+.pax-badge{background:#B5D4F4;color:#0C447C;border-radius:4px;padding:2px 6px;font-size:11px;font-weight:600;min-width:30px;text-align:center}
+.pax-badge.h{background:#C0DD97;color:#3B6D11}
+.pax-name{flex:1;color:var(--color-text-primary)}
+.list-label{font-size:12px;font-weight:500;color:var(--color-text-secondary);margin:10px 0 4px}
+.export-btn{width:100%;padding:8px;border-radius:var(--border-radius-md);border:0.5px solid var(--color-border-secondary);background:transparent;cursor:pointer;font-size:13px;color:var(--color-text-primary);margin-top:8px}
+.export-btn:hover{background:var(--color-background-secondary)}
+.empty{font-size:12px;color:var(--color-text-tertiary);padding:4px 0}
+.notice{font-size:11px;color:var(--color-text-warning);margin-top:6px;padding:6px 10px;background:var(--color-background-warning);border-radius:var(--border-radius-md)}
+</style>
+
+<h2 class="sr-only">Pemilihan kursi bus dan HiAce studi banding Bandung — data tersinkron bersama</h2>
+<div class="wrap">
+  <div class="sync-bar">
+    <div class="sync-dot loading" id="sync-dot"></div>
+    <span id="sync-status">Memuat data...</span>
+    <span style="margin-left:auto;cursor:pointer;font-size:13px" onclick="loadAll()" title="Refresh"><i class="ti ti-refresh" aria-hidden="true"></i></span>
+  </div>
+
+  <div class="tabs">
+    <button class="tab active" onclick="switchTab('bus')"><i class="ti ti-bus" aria-hidden="true"></i> Bus (40)</button>
+    <button class="tab" onclick="switchTab('hies')"><i class="ti ti-car" aria-hidden="true"></i> HiAce (14)</button>
+    <button class="tab" onclick="switchTab('list')"><i class="ti ti-list" aria-hidden="true"></i> Daftar</button>
+  </div>
+
+  <div id="panel-bus" class="panel active">
+    <div class="stats">
+      <div class="stat"><div class="stat-val" id="bus-taken">0</div><div class="stat-lbl">Terisi</div></div>
+      <div class="stat"><div class="stat-val" id="bus-avail">40</div><div class="stat-lbl">Tersedia</div></div>
+      <div class="stat"><div class="stat-val">40</div><div class="stat-lbl">Total</div></div>
+    </div>
+    <div class="modal-wrap" id="bus-wrap" style="min-height:520px">
+      <div class="bus-outer" id="bus-layout"></div>
+      <div class="modal" id="modal-bus">
+        <div class="modal-bg" onclick="closeModal('bus')"></div>
+        <div class="modal-box">
+          <h3 id="modal-bus-title">Kursi B1</h3>
+          <input type="text" id="modal-bus-input" placeholder="Nama peserta..." maxlength="30"/>
+          <div class="modal-actions">
+            <button onclick="closeModal('bus')">Batal</button>
+            <button class="btn-confirm" onclick="saveSeat('bus')"><i class="ti ti-check" aria-hidden="true"></i> Simpan</button>
+          </div>
+          <div class="notice">Data akan tersimpan dan terlihat oleh semua orang.</div>
+        </div>
+      </div>
+    </div>
+    <div class="legend">
+      <div class="leg-item"><div class="leg-dot" style="background:var(--color-background-primary);border-color:var(--color-border-secondary)"></div>Kosong</div>
+      <div class="leg-item"><div class="leg-dot" style="background:#EAF3DE;border-color:#639922"></div>Terisi (terkunci)</div>
+    </div>
+  </div>
+
+  <div id="panel-hies" class="panel">
+    <div class="stats">
+      <div class="stat"><div class="stat-val" id="hies-taken">0</div><div class="stat-lbl">Terisi</div></div>
+      <div class="stat"><div class="stat-val" id="hies-avail">14</div><div class="stat-lbl">Tersedia</div></div>
+      <div class="stat"><div class="stat-val">14</div><div class="stat-lbl">Total</div></div>
+    </div>
+    <div class="modal-wrap" id="hies-wrap" style="min-height:400px">
+      <div class="bus-outer" id="hies-layout"></div>
+      <div class="modal" id="modal-hies">
+        <div class="modal-bg" onclick="closeModal('hies')"></div>
+        <div class="modal-box">
+          <h3 id="modal-hies-title">Kursi H1</h3>
+          <input type="text" id="modal-hies-input" placeholder="Nama peserta..." maxlength="30"/>
+          <div class="modal-actions">
+            <button onclick="closeModal('hies')">Batal</button>
+            <button class="btn-confirm" onclick="saveSeat('hies')"><i class="ti ti-check" aria-hidden="true"></i> Simpan</button>
+          </div>
+          <div class="notice">Data akan tersimpan dan terlihat oleh semua orang.</div>
+        </div>
+      </div>
+    </div>
+    <div class="legend">
+      <div class="leg-item"><div class="leg-dot" style="background:var(--color-background-primary);border-color:var(--color-border-secondary)"></div>Kosong</div>
+      <div class="leg-item"><div class="leg-dot" style="background:#EAF3DE;border-color:#639922"></div>Terisi (terkunci)</div>
+    </div>
+  </div>
+
+  <div id="panel-list" class="panel">
+    <div class="stats">
+      <div class="stat"><div class="stat-val" id="total-pax">0</div><div class="stat-lbl">Total</div></div>
+      <div class="stat"><div class="stat-val" id="total-bus-list">0</div><div class="stat-lbl">Bus</div></div>
+      <div class="stat"><div class="stat-val" id="total-hies-list">0</div><div class="stat-lbl">HiAce</div></div>
+    </div>
+    <div class="list-label">Bus</div>
+    <div class="pax-list" id="list-bus"></div>
+    <div class="list-label">HiAce</div>
+    <div class="pax-list" id="list-hies"></div>
+    <button class="export-btn" onclick="exportData()"><i class="ti ti-download" aria-hidden="true"></i> Export daftar (.txt)</button>
+  </div>
+</div>
+
+<script>
+const STORAGE_KEY_BUS = 'studibanding-bus-seats';
+const STORAGE_KEY_HIES = 'studibanding-hies-seats';
+let busData = {};
+let hiesData = {};
+let currentSeat = null;
+let currentVeh = null;
+
+function setSyncStatus(state, msg) {
+  const dot = document.getElementById('sync-dot');
+  const st = document.getElementById('sync-status');
+  dot.className = 'sync-dot' + (state === 'ok' ? '' : state === 'loading' ? ' loading' : ' error');
+  st.textContent = msg;
+}
+
+async function loadAll() {
+  setSyncStatus('loading', 'Memuat data terbaru...');
+  try {
+    const [rb, rh] = await Promise.all([
+      window.storage.get(STORAGE_KEY_BUS, true),
+      window.storage.get(STORAGE_KEY_HIES, true)
+    ]);
+    busData = rb ? JSON.parse(rb.value) : {};
+    hiesData = rh ? JSON.parse(rh.value) : {};
+    setSyncStatus('ok', 'Tersinkron — ' + new Date().toLocaleTimeString('id-ID', {hour:'2-digit',minute:'2-digit'}));
+  } catch(e) {
+    busData = busData || {};
+    hiesData = hiesData || {};
+    setSyncStatus('error', 'Gagal memuat, data lokal ditampilkan');
+  }
+  refreshLayout('bus');
+  refreshLayout('hies');
+  updateStats();
+}
+
+async function saveToStorage(veh) {
+  const key = veh === 'bus' ? STORAGE_KEY_BUS : STORAGE_KEY_HIES;
+  const data = veh === 'bus' ? busData : hiesData;
+  try {
+    await window.storage.set(key, JSON.stringify(data), true);
+    setSyncStatus('ok', 'Tersimpan — ' + new Date().toLocaleTimeString('id-ID', {hour:'2-digit',minute:'2-digit'}));
+  } catch(e) {
+    setSyncStatus('error', 'Gagal menyimpan!');
+  }
+}
+
+function makeSeat(id, veh) {
+  return `<div class="seat" data-id="${id}" data-veh="${veh}"><span class="seat-num">${id}</span><span class="seat-name"></span></div>`;
+}
+
+function buildBus() {
+  const el = document.getElementById('bus-layout');
+  el.innerHTML = '<div class="bus-label">depan (kemudi)</div>';
+  const drow = document.createElement('div');
+  drow.className = 'driver-row';
+  drow.innerHTML = '<div class="seat driver"><span class="seat-num"><i class="ti ti-steering-wheel" aria-hidden="true"></i></span></div><div class="seat driver"><span class="seat-num">supir</span></div>';
+  el.appendChild(drow);
+  const area = document.createElement('div');
+  area.className = 'rows-area';
+  for (let r = 1; r <= 9; r++) {
+    const row = document.createElement('div');
+    row.className = 'row';
+    const l1 = (r-1)*2+1, l2 = (r-1)*2+2;
+    const r1 = 20+l1, r2 = 20+l2;
+    row.innerHTML = `<span class="row-num">${r}</span>${makeSeat('B'+l1,'bus')}${makeSeat('B'+l2,'bus')}<div class="aisle"></div>${makeSeat('B'+r1,'bus')}${makeSeat('B'+r2,'bus')}`;
+    area.appendChild(row);
+  }
+  const row10 = document.createElement('div');
+  row10.className = 'row';
+  row10.innerHTML = `<span class="row-num">10</span>${makeSeat('B19','bus')}${makeSeat('B20','bus')}<div class="aisle"></div>${makeSeat('B39','bus')}`;
+  area.appendChild(row10);
+  el.appendChild(area);
+  const back = document.createElement('div');
+  back.className = 'back-row';
+  back.innerHTML = makeSeat('B40','bus');
+  el.appendChild(back);
+  document.querySelectorAll('[data-veh="bus"]').forEach(el => {
+    el.addEventListener('click', () => openModal('bus', el.dataset.id));
+  });
+}
+
+function buildHies() {
+  const el = document.getElementById('hies-layout');
+  el.innerHTML = '<div class="bus-label">depan (kemudi)</div>';
+  const drow = document.createElement('div');
+  drow.className = 'driver-row';
+  drow.innerHTML = `<div class="seat driver"><span class="seat-num">supir</span></div>${makeSeat('H1','hies')}`;
+  el.appendChild(drow);
+  const area = document.createElement('div');
+  area.className = 'rows-area';
+  for (let r = 0; r < 6; r++) {
+    const row = document.createElement('div');
+    row.className = 'row';
+    const l = 2 + r*2, ri = 3 + r*2;
+    row.innerHTML = `<span class="row-num">${r+2}</span>${makeSeat('H'+l,'hies')}<div class="aisle"></div>${makeSeat('H'+ri,'hies')}`;
+    area.appendChild(row);
+  }
+  el.appendChild(area);
+  const back = document.createElement('div');
+  back.className = 'back-row';
+  back.innerHTML = makeSeat('H14','hies');
+  el.appendChild(back);
+  document.querySelectorAll('[data-veh="hies"]').forEach(el => {
+    el.addEventListener('click', () => openModal('hies', el.dataset.id));
+  });
+}
+
+function refreshLayout(veh) {
+  const data = veh === 'bus' ? busData : hiesData;
+  document.querySelectorAll(`[data-veh="${veh}"]`).forEach(el => {
+    const id = el.dataset.id;
+    const nameEl = el.querySelector('.seat-name');
+    if (data[id]) {
+      el.classList.add('taken');
+      if (nameEl) nameEl.textContent = data[id];
+    } else {
+      el.classList.remove('taken');
+      if (nameEl) nameEl.textContent = '';
+    }
+  });
+}
+
+function openModal(veh, id) {
+  const data = veh === 'bus' ? busData : hiesData;
+  if (data[id]) return;
+  currentSeat = id; currentVeh = veh;
+  const p = veh === 'bus' ? 'modal-bus' : 'modal-hies';
+  document.getElementById(p+'-title').textContent = 'Pilih kursi ' + id;
+  document.getElementById(p+'-input').value = '';
+  document.getElementById('modal-'+veh).classList.add('show');
+  setTimeout(() => document.getElementById(p+'-input').focus(), 100);
+}
+
+function closeModal(veh) {
+  document.getElementById('modal-'+veh).classList.remove('show');
+}
+
+async function saveSeat(veh) {
+  const p = veh === 'bus' ? 'modal-bus' : 'modal-hies';
+  const name = document.getElementById(p+'-input').value.trim();
+  if (!name) { alert('Masukkan nama peserta!'); return; }
+  const data = veh === 'bus' ? busData : hiesData;
+  if (data[currentSeat]) { alert('Kursi sudah terisi!'); closeModal(veh); return; }
+  data[currentSeat] = name;
+  refreshLayout(veh);
+  updateStats();
+  closeModal(veh);
+  await saveToStorage(veh);
+}
+
+function updateStats() {
+  const bt = Object.keys(busData).length;
+  const ht = Object.keys(hiesData).length;
+  document.getElementById('bus-taken').textContent = bt;
+  document.getElementById('bus-avail').textContent = 40 - bt;
+  document.getElementById('hies-taken').textContent = ht;
+  document.getElementById('hies-avail').textContent = 14 - ht;
+  document.getElementById('total-pax').textContent = bt + ht;
+  document.getElementById('total-bus-list').textContent = bt;
+  document.getElementById('total-hies-list').textContent = ht;
+  renderList();
+}
+
+function renderList() {
+  const lb = document.getElementById('list-bus');
+  const lh = document.getElementById('list-hies');
+  const bEntries = Object.entries(busData).sort((a,b) => a[0].localeCompare(b[0], undefined, {numeric:true}));
+  const hEntries = Object.entries(hiesData).sort((a,b) => a[0].localeCompare(b[0], undefined, {numeric:true}));
+  lb.innerHTML = bEntries.length ? bEntries.map(([id,name]) => `<div class="pax-item"><span class="pax-badge">${id}</span><span class="pax-name">${name}</span></div>`).join('') : '<div class="empty">Belum ada peserta</div>';
+  lh.innerHTML = hEntries.length ? hEntries.map(([id,name]) => `<div class="pax-item"><span class="pax-badge h">${id}</span><span class="pax-name">${name}</span></div>`).join('') : '<div class="empty">Belum ada peserta</div>';
+}
+
+function switchTab(name) {
+  document.querySelectorAll('.tab').forEach((t, i) => { t.classList.toggle('active', ['bus','hies','list'][i] === name); });
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+  document.getElementById('panel-'+name).classList.add('active');
+  loadAll();
+}
+
+function exportData() {
+  let txt = '=== DAFTAR PESERTA STUDI BANDING KE BANDUNG ===\n\n';
+  txt += '--- BUS (' + Object.keys(busData).length + '/40) ---\n';
+  Object.entries(busData).sort((a,b) => a[0].localeCompare(b[0],undefined,{numeric:true})).forEach(([id,name]) => txt += id.padEnd(6)+' '+name+'\n');
+  txt += '\n--- HIACE (' + Object.keys(hiesData).length + '/14) ---\n';
+  Object.entries(hiesData).sort((a,b) => a[0].localeCompare(b[0],undefined,{numeric:true})).forEach(([id,name]) => txt += id.padEnd(6)+' '+name+'\n');
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([txt], {type:'text/plain'}));
+  a.download = 'peserta-studi-banding.txt';
+  a.click();
+}
+
+document.querySelectorAll('.modal-box input').forEach(inp => {
+  inp.addEventListener('keydown', e => { if (e.key === 'Enter') { const veh = inp.id.includes('bus') ? 'bus' : 'hies'; saveSeat(veh); } });
+});
+
+buildBus();
+buildHies();
+loadAll();
+setInterval(loadAll, 30000);
+</script>
